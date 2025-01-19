@@ -1,9 +1,7 @@
 import httpx
 
-# Keycloak configuration
-EDA_API_URL = "https://devbox.panda-cobra.ts.net"
 EDA_VERSION = "v24.12.1"
-KC_KEYCLOAK_URL = f"{EDA_API_URL}/core/httpproxy/v1/keycloak/"
+
 KC_REALM = "master"
 KC_CLIENT_ID = "admin-cli"
 KC_USERNAME = "admin"
@@ -12,9 +10,20 @@ EDA_REALM = "eda"
 API_CLIENT_ID = "eda"
 
 
-def get_client_secret() -> str:
+class Client:
+    def __init__(self, base_url: str):
+        self.base_url = base_url
+        self.kc_url = f"{self.base_url}/core/httpproxy/v1/keycloak/"
+        self.token = ""
+
+    def auth(self) -> None:
+        """Authenticate and get access token"""
+        self.token = _get_access_token(self)
+
+
+def _get_client_secret(kc_url: str) -> str:
     with httpx.Client(verify=False) as client:
-        token_url = f"{KC_KEYCLOAK_URL}/realms/{KC_REALM}/protocol/openid-connect/token"
+        token_url = f"{kc_url}/realms/{KC_REALM}/protocol/openid-connect/token"
         token_data = {
             "grant_type": "password",
             "client_id": KC_CLIENT_ID,
@@ -29,7 +38,7 @@ def get_client_secret() -> str:
         access_token = token_response.json()["access_token"]
 
         # Step 2: Fetch the `eda` client ID and secret
-        admin_api_url = f"{KC_KEYCLOAK_URL}/admin/realms/{EDA_REALM}/clients"
+        admin_api_url = f"{kc_url}/admin/realms/{EDA_REALM}/clients"
         auth_headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
@@ -58,10 +67,9 @@ def get_client_secret() -> str:
         return client_secret
 
 
-def get_access_token(client_secret: str) -> str:
-    token_endpoint = (
-        f"{KC_KEYCLOAK_URL}/realms/{EDA_REALM}/protocol/openid-connect/token"
-    )
+def _get_access_token(self: Client) -> str:
+    client_secret = _get_client_secret(self.kc_url)
+    token_endpoint = f"{self.kc_url}/realms/{EDA_REALM}/protocol/openid-connect/token"
 
     token_data = {
         "client_id": API_CLIENT_ID,

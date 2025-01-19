@@ -1,18 +1,16 @@
-import asyncio
-
 from models.com.nokia.eda.interfaces.v1alpha1 import (
     Interface,
     Member,
     Metadata,
     SpecModel,
 )
-from src import auth
+from src.client import Client
 
 
 def main():
-    client_secret = auth.get_client_secret()
-    access_token = auth.get_access_token(client_secret)
-    print(f"Access Token: {access_token}")
+    c = Client(base_url="https://devbox.panda-cobra.ts.net")
+    c.auth()
+    print(f"Access Token: {c.token}")
 
     # iface = Interface(
     #     apiVersion="interfaces.eda.nokia.com/v1alpha1",
