@@ -9,15 +9,10 @@ from models.com.nokia.eda.interfaces.v1alpha1 import (
 from src import auth
 
 
-async def get_api_token():
-    client_secret = await auth.get_client_secret()
-    access_token = await auth.get_access_token(client_secret)
-    print(f"Access Token: {access_token}")
-
-
 def main():
-    # Run the asynchronous function
-    asyncio.run(get_api_token())
+    client_secret = auth.get_client_secret()
+    access_token = auth.get_access_token(client_secret)
+    print(f"Access Token: {access_token}")
 
     # iface = Interface(
     #     apiVersion="interfaces.eda.nokia.com/v1alpha1",

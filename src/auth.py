@@ -11,21 +11,20 @@ KC_PASSWORD = "admin"
 EDA_REALM = "eda"
 API_CLIENT_ID = "eda"
 
-# Step 1: Get an access token
-token_url = f"{KC_KEYCLOAK_URL}/realms/{KC_REALM}/protocol/openid-connect/token"
-token_data = {
-    "grant_type": "password",
-    "client_id": KC_CLIENT_ID,
-    "username": KC_USERNAME,
-    "password": KC_PASSWORD,
-}
-headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
+def get_client_secret() -> str:
+    with httpx.Client(verify=False) as client:
+        token_url = f"{KC_KEYCLOAK_URL}/realms/{KC_REALM}/protocol/openid-connect/token"
+        token_data = {
+            "grant_type": "password",
+            "client_id": KC_CLIENT_ID,
+            "username": KC_USERNAME,
+            "password": KC_PASSWORD,
+        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-async def get_client_secret() -> str:
-    async with httpx.AsyncClient(verify=False) as client:
         # Fetch access token
-        token_response = await client.post(token_url, data=token_data, headers=headers)
+        token_response = client.post(token_url, data=token_data, headers=headers)
         token_response.raise_for_status()
         access_token = token_response.json()["access_token"]
 
@@ -37,7 +36,7 @@ async def get_client_secret() -> str:
         }
 
         # Fetch clients
-        clients_response = await client.get(admin_api_url, headers=auth_headers)
+        clients_response = client.get(admin_api_url, headers=auth_headers)
         clients_response.raise_for_status()
         clients = clients_response.json()
 
@@ -52,14 +51,14 @@ async def get_client_secret() -> str:
         # Fetch the client secret
         client_id = eda_client["id"]
         client_secret_url = f"{admin_api_url}/{client_id}/client-secret"
-        secret_response = await client.get(client_secret_url, headers=auth_headers)
+        secret_response = client.get(client_secret_url, headers=auth_headers)
         secret_response.raise_for_status()
         client_secret = secret_response.json()["value"]
 
         return client_secret
 
 
-async def get_access_token(client_secret: str) -> str:
+def get_access_token(client_secret: str) -> str:
     token_endpoint = (
         f"{KC_KEYCLOAK_URL}/realms/{EDA_REALM}/protocol/openid-connect/token"
     )
@@ -75,7 +74,7 @@ async def get_access_token(client_secret: str) -> str:
 
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-    async with httpx.AsyncClient(verify=False) as client:
-        response = await client.post(token_endpoint, data=token_data, headers=headers)
+    with httpx.Client(verify=False) as client:
+        response = client.post(token_endpoint, data=token_data, headers=headers)
         response.raise_for_status()
         return response.json()["access_token"]
