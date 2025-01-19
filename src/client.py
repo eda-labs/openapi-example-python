@@ -1,4 +1,16 @@
+from typing import Any, Optional
+
 import httpx
+from pydantic import BaseModel
+
+from models.com.nokia.eda.siteinfo.v1alpha1 import Banner
+from models.core import (
+    Transaction,
+    TransactionContent,
+    TransactionCr,
+    TransactionType,
+    TransactionValue,
+)
 
 EDA_VERSION = "v24.12.1"
 
@@ -15,10 +27,30 @@ class Client:
         self.base_url = base_url
         self.kc_url = f"{self.base_url}/core/httpproxy/v1/keycloak/"
         self.token = ""
+        self.transaction: Optional[Transaction] = None
 
     def auth(self) -> None:
         """Authenticate and get access token"""
         self.token = _get_access_token(self)
+
+    def add_to_transaction_create(self, resource: BaseModel) -> None:
+        """Add resource to transaction"""
+        content = TransactionContent(
+            **resource.model_dump(exclude_unset=True, exclude_defaults=True)
+        )
+
+        if self.transaction is None:
+            self.transaction = Transaction(
+                crs=[
+                    TransactionCr(
+                        type=TransactionType(create=TransactionValue(value=content))
+                    )
+                ],
+                description="",
+                dryRun=False,
+            )
+        # else:
+        #     self.transaction.resources.append(resource)
 
 
 def _get_client_secret(kc_url: str) -> str:
