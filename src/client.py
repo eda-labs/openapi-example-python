@@ -22,8 +22,9 @@ EDA_REALM = "eda"
 API_CLIENT_ID = "eda"
 
 
-class Client:
+class Client(httpx.Client):
     def __init__(self, base_url: str):
+        super().__init__()
         self.base_url = base_url
         self.kc_url = f"{self.base_url}/core/httpproxy/v1/keycloak/"
         self.token = ""
