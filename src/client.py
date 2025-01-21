@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import httpx
 from pydantic import BaseModel
@@ -9,6 +9,7 @@ from models.core import (
     Transaction,
     TransactionContent,
     TransactionCr,
+    TransactionDetails,
     TransactionType,
     TransactionValue,
 )
@@ -35,13 +36,14 @@ class EDAClient(httpx.Client):
         self.transaction: Optional[Transaction] = None
         self.transaction_endpoint: str = self.base_url.join("/core/transaction/v1")
 
+        super().__init__(headers=self.headers, verify=False)
+
         # acquire the token during initialization
         self.auth()
-        super().__init__(headers=self.headers, verify=False)
 
     def auth(self) -> None:
         """Authenticate and get access token"""
-        self.token = _get_access_token(self)
+        self.token = self._get_access_token()
         self.headers = {
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json",
@@ -97,9 +99,12 @@ class EDAClient(httpx.Client):
         tx_id: int = response.json()["id"]
         logger.info(f"Transaction {tx_id} committed")
 
-        self.get_transaction(tx_id)
+        tx_details: TransactionDetails = self.get_transaction_details(tx_id)
+        errs = self.tx_must_succeed(tx_details)
+        if errs:
+            logger.error(f"Transaction {tx_id} errors:\n  - " + "\n  - ".join(errs))
 
-    def get_transaction(self, tx_id: int) -> Any:
+    def get_transaction_details(self, tx_id: int) -> TransactionDetails:
         """Get transaction"""
 
         params = {
@@ -113,12 +118,13 @@ class EDAClient(httpx.Client):
         if response.status_code != 200:
             raise ValueError(response.text)
 
-        logger.info(f"Transaction {tx_id} details:\n{response.json()}")
+        # logger.info(f"Transaction {tx_id} details:\n{response.json()}")
 
+        return TransactionDetails(**response.json())
 
-def _get_client_secret(kc_url: str) -> str:
-    with httpx.Client(verify=False) as client:
-        token_url = f"{kc_url}/realms/{KC_REALM}/protocol/openid-connect/token"
+    def _get_client_secret(self) -> str:
+        client = self
+        token_url = f"{self.kc_url}/realms/{KC_REALM}/protocol/openid-connect/token"
         token_data = {
             "grant_type": "password",
             "client_id": KC_CLIENT_ID,
@@ -133,7 +139,7 @@ def _get_client_secret(kc_url: str) -> str:
         access_token = token_response.json()["access_token"]
 
         # Step 2: Fetch the `eda` client ID and secret
-        admin_api_url = f"{kc_url}/admin/realms/{EDA_REALM}/clients"
+        admin_api_url = f"{self.kc_url}/admin/realms/{EDA_REALM}/clients"
         auth_headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
@@ -161,23 +167,28 @@ def _get_client_secret(kc_url: str) -> str:
 
         return client_secret
 
+    def _get_access_token(self) -> str:
+        client_secret = self._get_client_secret()
+        token_endpoint = (
+            f"{self.kc_url}/realms/{EDA_REALM}/protocol/openid-connect/token"
+        )
 
-def _get_access_token(self: EDAClient) -> str:
-    client_secret = _get_client_secret(self.kc_url)
-    token_endpoint = f"{self.kc_url}/realms/{EDA_REALM}/protocol/openid-connect/token"
+        token_data = {
+            "client_id": API_CLIENT_ID,
+            "grant_type": "password",
+            "scope": "openid",
+            "username": "admin",
+            "password": "admin",
+            "client_secret": client_secret,
+        }
 
-    token_data = {
-        "client_id": API_CLIENT_ID,
-        "grant_type": "password",
-        "scope": "openid",
-        "username": "admin",
-        "password": "admin",
-        "client_secret": client_secret,
-    }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-    with httpx.Client(verify=False) as client:
-        response = client.post(token_endpoint, data=token_data, headers=headers)
+        response = self.post(token_endpoint, data=token_data, headers=headers)
         response.raise_for_status()
         return response.json()["access_token"]
+
+    def tx_must_succeed(self, tx_details: TransactionDetails) -> List[str] | None:
+        """Check if transaction succeeded"""
+        if not tx_details.success:
+            return tx_details.generalErrors

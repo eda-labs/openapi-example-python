@@ -1,6 +1,5 @@
 import logging
 
-from pydantic import HttpUrl
 from rich import print
 from rich.logging import RichHandler
 
@@ -23,12 +22,11 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    with EDAClient(base_url="https://devbox.panda-cobra.ts.net") as eda:
-        my_banner = banner("This is a test banner")
-        eda.add_to_transaction_create(my_banner)
-        resp = eda.commit_transaction()
+    eda = EDAClient(base_url="https://devbox.panda-cobra.ts.net")
 
-        print(resp)
+    my_banner = banner("This is a test banner")
+    eda.add_to_transaction_create(my_banner)
+    _ = eda.commit_transaction()
 
     # iface = Interface(
     #     apiVersion="interfaces.eda.nokia.com/v1alpha1",
