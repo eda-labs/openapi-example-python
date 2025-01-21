@@ -23,12 +23,12 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    eda = EDAClient(base_url="https://devbox.panda-cobra.ts.net")
-    logger.info(f"Access Token: {eda.token}")
+    with EDAClient(base_url="https://devbox.panda-cobra.ts.net") as eda:
+        my_banner = banner("This is a test banner")
+        eda.add_to_transaction_create(my_banner)
+        resp = eda.commit_transaction()
 
-    my_banner = banner("This is a test banner")
-    # print(my_banner.model_dump())
-    eda.add_to_transaction_create(my_banner)
+        print(resp)
 
     # iface = Interface(
     #     apiVersion="interfaces.eda.nokia.com/v1alpha1",

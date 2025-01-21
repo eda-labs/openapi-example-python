@@ -14,9 +14,7 @@ def banner(motd_text: str) -> Banner:
             namespace="clab-vlan",
             labels={"app": "banner"},
         ),
-        spec=Spec(
-            motd=motd_text,
-        ),
+        spec=Spec(motd=motd_text, nodeSelector=["containerlab=managed"]),
     )
 
     return banner

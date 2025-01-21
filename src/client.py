@@ -1,7 +1,9 @@
-from typing import Optional
+import logging
+from typing import Any, Optional
 
 import httpx
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
+from rich import print
 
 from models.core import (
     Transaction,
@@ -10,6 +12,8 @@ from models.core import (
     TransactionType,
     TransactionValue,
 )
+
+logger = logging.getLogger(__name__)
 
 EDA_VERSION = "v24.12.1"
 
@@ -47,7 +51,9 @@ class EDAClient(httpx.Client):
         """Add resource to transaction"""
         # convert the resource instance of whatever actual type to a TransactionContent
         content = TransactionContent(
-            **resource.model_dump(exclude_unset=True, exclude_defaults=True)
+            **resource.model_dump(
+                exclude_unset=True, exclude_none=True, exclude_defaults=True
+            )
         )
 
         if self.transaction is None:
@@ -67,12 +73,47 @@ class EDAClient(httpx.Client):
                 )
             )
 
-    # def run_transaction(self) -> Any:
-    #     """Run transaction"""
-    #     # convert the transaction instance to a dict
-    #     transaction_dict = self.transaction.model_dump(
-    #         exclude_unset=True, exclude_defaults=True
-    #     )
+    def commit_transaction(self) -> Any:
+        """Commit transaction"""
+
+        # convert the transaction instance to a dict
+        if self.transaction is None:
+            raise ValueError("No transaction to commit")
+
+        self.transaction.retain = True
+        self.transaction.resultType = "normal"
+
+        content = self.transaction.model_dump_json(
+            exclude_unset=True, exclude_none=True, exclude_defaults=True
+        )
+
+        response = self.post(
+            url=self.transaction_endpoint,
+            content=content,
+        )
+        if response.status_code != 200:
+            raise ValueError(response.text)
+
+        tx_id: int = response.json()["id"]
+        logger.info(f"Transaction {tx_id} committed")
+
+        self.get_transaction(tx_id)
+
+    def get_transaction(self, tx_id: int) -> Any:
+        """Get transaction"""
+
+        params = {
+            "waitForComplete": "true",
+            # "failOnErrors": "true"
+        }
+        response = self.get(
+            url=f"{self.transaction_endpoint}/details/{tx_id}",
+            params=params,
+        )
+        if response.status_code != 200:
+            raise ValueError(response.text)
+
+        logger.info(f"Transaction {tx_id} details:\n{response.json()}")
 
 
 def _get_client_secret(kc_url: str) -> str:
