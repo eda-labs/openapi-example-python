@@ -15,7 +15,7 @@ def main():
     my_interface = interface(ns="clab-vlan", name="my-interface")
 
     eda = EDAClient(base_url="https://devbox.panda-cobra.ts.net")
-    # eda.add_to_transaction_delete(my_banner)
+    eda.add_to_transaction_replace(my_banner)
     eda.add_to_transaction_replace(my_interface)
     _ = eda.commit_transaction()
 
