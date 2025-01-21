@@ -8,8 +8,12 @@ setup_logging()
 def main():
     eda = EDAClient(base_url="https://devbox.panda-cobra.ts.net")
 
-    my_banner = banner("Let's have some model driven automation going on!")
-    eda.add_to_transaction_replace(my_banner)
+    my_banner = banner(
+        ns="clab-vlan",
+        name="my-banner",
+        motd_text="Let's have some model driven automation going on!",
+    )
+    eda.add_to_transaction_delete(my_banner)
     _ = eda.commit_transaction()
 
 

@@ -5,6 +5,8 @@ import httpx
 from pydantic import BaseModel
 
 from models.core import (
+    GroupVersionKind,
+    NsCrGvkName,
     Transaction,
     TransactionContent,
     TransactionCr,
@@ -68,6 +70,11 @@ class EDAClient(httpx.Client):
 
         self.add_to_transaction(resource, _REPLACE)
 
+    def add_to_transaction_delete(self, resource: BaseModel) -> None:
+        """Add resource to the delete list of a transaction"""
+
+        self.add_to_transaction(resource, _DELETE)
+
     def add_to_transaction(self, resource: BaseModel, type: TxType) -> None:
         """Add resource to transaction"""
 
@@ -78,15 +85,34 @@ class EDAClient(httpx.Client):
             )
         )
 
+        if (
+            content.apiVersion is None
+            or content.kind is None
+            or content.metadata is None
+        ):
+            raise ValueError(
+                f"Resource {content.apiVersion} {content.kind} is not a valid resource"
+            )
+
         logger.info(
             f"Adding '{content.kind}' resource from '{content.apiVersion}' to the '{type}' transaction list"
         )
 
         tx_type_mapping = {
             "create": TransactionType(create=TransactionValue(value=content)),
-            # "delete": TransactionType(delete=content),
+            "delete": TransactionType(
+                delete=NsCrGvkName(
+                    gvk=GroupVersionKind(
+                        group=content.apiVersion.split("/")[0],
+                        version=content.apiVersion.split("/")[1],
+                        kind=content.kind,
+                    ),
+                    name=content.metadata.name,
+                    namespace=content.metadata.namespace,
+                )
+            ),
             "modify": TransactionType(modify=TransactionValue(value=content)),
-            "replace": TransactionType(modify=TransactionValue(value=content)),
+            "replace": TransactionType(replace=TransactionValue(value=content)),
         }
 
         tx_cr = TransactionCr(type=tx_type_mapping[type])
@@ -113,6 +139,8 @@ class EDAClient(httpx.Client):
         content = self.transaction.model_dump_json(
             exclude_unset=True, exclude_none=True, exclude_defaults=True
         )
+
+        logger.info(f"Committing transaction: {content}")
 
         response = self.post(
             url=self.transaction_endpoint,
