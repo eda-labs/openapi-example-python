@@ -1,10 +1,8 @@
-import enum
 import logging
 from typing import Any, List, Literal, Optional
 
 import httpx
 from pydantic import BaseModel
-from rich import print
 
 from models.core import (
     Transaction,
