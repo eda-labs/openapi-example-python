@@ -70,6 +70,11 @@ class EDAClient(httpx.Client):
 
         self.add_to_transaction(resource, _REPLACE)
 
+    def add_to_transaction_modify(self, resource: BaseModel) -> None:
+        """Add resource to the modify list of a transaction"""
+
+        self.add_to_transaction(resource, _MODIFY)
+
     def add_to_transaction_delete(self, resource: BaseModel) -> None:
         """Add resource to the delete list of a transaction"""
 
@@ -140,7 +145,7 @@ class EDAClient(httpx.Client):
             exclude_unset=True, exclude_none=True, exclude_defaults=True
         )
 
-        logger.info(f"Committing transaction: {content}")
+        # logger.info(f"Committing transaction: {content}")
 
         response = self.post(
             url=self.transaction_endpoint,

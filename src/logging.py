@@ -1,6 +1,7 @@
 import logging
 
 from rich.logging import RichHandler
+from rich.traceback import install
 
 
 def setup_logging():
@@ -12,5 +13,7 @@ def setup_logging():
         format="%(message)s",
         handlers=[RichHandler(rich_tracebacks=True, markup=True)],
     )
-    logger = logging.getLogger(__name__)
+
     logging.getLogger("httpx").setLevel(logging.WARNING)
+
+    install(show_locals=False)
