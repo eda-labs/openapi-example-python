@@ -1,5 +1,6 @@
+import enum
 import logging
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 
 import httpx
 from pydantic import BaseModel
@@ -10,9 +11,17 @@ from models.core import (
     TransactionContent,
     TransactionCr,
     TransactionDetails,
+    TransactionId,
     TransactionType,
     TransactionValue,
 )
+
+# transaction types
+_CREATE = "create"
+_DELETE = "delete"
+_MODIFY = "modify"
+_REPLACE = "replace"
+TxType = Literal["create", "delete", "modify", "replace"]
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +52,8 @@ class EDAClient(httpx.Client):
 
     def auth(self) -> None:
         """Authenticate and get access token"""
+        logger.info("Authenticating with EDA API server")
+
         self.token = self._get_access_token()
         self.headers = {
             "Authorization": f"Bearer {self.token}",
@@ -50,7 +61,18 @@ class EDAClient(httpx.Client):
         }
 
     def add_to_transaction_create(self, resource: BaseModel) -> None:
+        """Add resource to the create list of a transaction"""
+
+        self.add_to_transaction(resource, _CREATE)
+
+    def add_to_transaction_replace(self, resource: BaseModel) -> None:
+        """Add resource to the replace list of a transaction"""
+
+        self.add_to_transaction(resource, _REPLACE)
+
+    def add_to_transaction(self, resource: BaseModel, type: TxType) -> None:
         """Add resource to transaction"""
+
         # convert the resource instance of whatever actual type to a TransactionContent
         content = TransactionContent(
             **resource.model_dump(
@@ -58,22 +80,27 @@ class EDAClient(httpx.Client):
             )
         )
 
+        logger.info(
+            f"Adding '{content.kind}' resource from '{content.apiVersion}' to the '{type}' transaction list"
+        )
+
+        tx_type_mapping = {
+            "create": TransactionType(create=TransactionValue(value=content)),
+            # "delete": TransactionType(delete=content),
+            "modify": TransactionType(modify=TransactionValue(value=content)),
+            "replace": TransactionType(modify=TransactionValue(value=content)),
+        }
+
+        tx_cr = TransactionCr(type=tx_type_mapping[type])
+
         if self.transaction is None:
             self.transaction = Transaction(
-                crs=[
-                    TransactionCr(
-                        type=TransactionType(create=TransactionValue(value=content))
-                    )
-                ],
+                crs=[tx_cr],
                 description="",
                 dryRun=False,
             )
         else:
-            self.transaction.crs.append(
-                TransactionCr(
-                    type=TransactionType(create=TransactionValue(value=content))
-                )
-            )
+            self.transaction.crs.append(tx_cr)
 
     def commit_transaction(self) -> Any:
         """Commit transaction"""
@@ -96,13 +123,17 @@ class EDAClient(httpx.Client):
         if response.status_code != 200:
             raise ValueError(response.text)
 
-        tx_id: int = response.json()["id"]
-        logger.info(f"Transaction {tx_id} committed")
+        tx_id: TransactionId = TransactionId(**response.json())
+        if tx_id.id is None:
+            raise ValueError(f"Transaction ID is None: {response.text}")
 
-        tx_details: TransactionDetails = self.get_transaction_details(tx_id)
+        logger.info(f"Transaction {tx_id.id} committed")
+
+        tx_details: TransactionDetails = self.get_transaction_details(tx_id.id)
         errs = self.tx_must_succeed(tx_details)
         if errs:
-            logger.error(f"Transaction {tx_id} errors:\n  - " + "\n  - ".join(errs))
+            logger.error(f"Transaction {tx_id.id} errors:\n  - " + "\n  - ".join(errs))
+        logger.info(f"Transaction {tx_id.id} state: {tx_details.state}")
 
     def get_transaction_details(self, tx_id: int) -> TransactionDetails:
         """Get transaction"""
