@@ -1,9 +1,8 @@
-from typing import Any, Optional
+from typing import Optional
 
 import httpx
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 
-from models.com.nokia.eda.siteinfo.v1alpha1 import Banner
 from models.core import (
     Transaction,
     TransactionContent,
@@ -22,20 +21,31 @@ EDA_REALM = "eda"
 API_CLIENT_ID = "eda"
 
 
-class Client(httpx.Client):
+class EDAClient(httpx.Client):
     def __init__(self, base_url: str):
-        super().__init__()
-        self.base_url = base_url
-        self.kc_url = f"{self.base_url}/core/httpproxy/v1/keycloak/"
-        self.token = ""
+        self.base_url: str = base_url
+        self.kc_url: str = self.base_url.join("/core/httpproxy/v1/keycloak")
+
+        self.headers: dict[str, str] = {}
+        self.token: str = ""
         self.transaction: Optional[Transaction] = None
+        self.transaction_endpoint: str = self.base_url.join("/core/transaction/v1")
+
+        # acquire the token during initialization
+        self.auth()
+        super().__init__(headers=self.headers, verify=False)
 
     def auth(self) -> None:
         """Authenticate and get access token"""
         self.token = _get_access_token(self)
+        self.headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json",
+        }
 
     def add_to_transaction_create(self, resource: BaseModel) -> None:
         """Add resource to transaction"""
+        # convert the resource instance of whatever actual type to a TransactionContent
         content = TransactionContent(
             **resource.model_dump(exclude_unset=True, exclude_defaults=True)
         )
@@ -50,8 +60,19 @@ class Client(httpx.Client):
                 description="",
                 dryRun=False,
             )
-        # else:
-        #     self.transaction.resources.append(resource)
+        else:
+            self.transaction.crs.append(
+                TransactionCr(
+                    type=TransactionType(create=TransactionValue(value=content))
+                )
+            )
+
+    # def run_transaction(self) -> Any:
+    #     """Run transaction"""
+    #     # convert the transaction instance to a dict
+    #     transaction_dict = self.transaction.model_dump(
+    #         exclude_unset=True, exclude_defaults=True
+    #     )
 
 
 def _get_client_secret(kc_url: str) -> str:
@@ -100,7 +121,7 @@ def _get_client_secret(kc_url: str) -> str:
         return client_secret
 
 
-def _get_access_token(self: Client) -> str:
+def _get_access_token(self: EDAClient) -> str:
     client_secret = _get_client_secret(self.kc_url)
     token_endpoint = f"{self.kc_url}/realms/{EDA_REALM}/protocol/openid-connect/token"
 

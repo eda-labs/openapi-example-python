@@ -1,5 +1,9 @@
 import logging
 
+from pydantic import HttpUrl
+from rich import print
+from rich.logging import RichHandler
+
 from models.com.nokia.eda.interfaces.v1alpha1 import (
     Interface,
     Member,
@@ -7,22 +11,24 @@ from models.com.nokia.eda.interfaces.v1alpha1 import (
     SpecModel,
 )
 from src.banner import banner
-from src.client import Client
+from src.client import EDAClient
 
+# Replace the basic logging config with Rich handler
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(message)s",
+    handlers=[RichHandler(rich_tracebacks=True, markup=True)],
 )
 logger = logging.getLogger(__name__)
 
 
 def main():
-    c = Client(base_url="https://devbox.panda-cobra.ts.net")
-    c.auth()
-    logger.info(f"Access Token: {c.token}")
+    eda = EDAClient(base_url="https://devbox.panda-cobra.ts.net")
+    logger.info(f"Access Token: {eda.token}")
 
     my_banner = banner("This is a test banner")
     # print(my_banner.model_dump())
-    c.add_to_transaction_create(my_banner)
+    eda.add_to_transaction_create(my_banner)
 
     # iface = Interface(
     #     apiVersion="interfaces.eda.nokia.com/v1alpha1",
