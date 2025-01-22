@@ -1,0 +1,86 @@
+[
+  {
+    "name": "core",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/core/core.json"
+  },
+  {
+    "name": "aaa",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/aaa.eda.nokia.com/v1alpha1/aaa.json"
+  },
+  {
+    "name": "appstore",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/appstore.eda.nokia.com/v1/appstore.json"
+  },
+  {
+    "name": "bootstrap",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/bootstrap.eda.nokia.com/v1alpha1/bootstrap.json"
+  },
+  {
+    "name": "components",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/components.eda.nokia.com/v1alpha1/components.json"
+  },
+  {
+    "name": "config",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/config.eda.nokia.com/v1alpha1/config.json"
+  },
+  {
+    "name": "core",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/core.eda.nokia.com/v1/core.json"
+  },
+  {
+    "name": "fabrics",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/fabrics.eda.nokia.com/v1alpha1/fabrics.json"
+  },
+  {
+    "name": "filters",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/filters.eda.nokia.com/v1alpha1/filters.json"
+  },
+  {
+    "name": "interfaces",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/interfaces.eda.nokia.com/v1alpha1/interfaces.json"
+  },
+  {
+    "name": "oam",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/oam.eda.nokia.com/v1alpha1/oam.json"
+  },
+  {
+    "name": "protocols",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/protocols.eda.nokia.com/v1alpha1/protocols.json"
+  },
+  {
+    "name": "qos",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/qos.eda.nokia.com/v1alpha1/qos.json"
+  },
+  {
+    "name": "routing",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/routing.eda.nokia.com/v1alpha1/routing.json"
+  },
+  {
+    "name": "routingpolicies",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/routingpolicies.eda.nokia.com/v1alpha1/routingpolicies.json"
+  },
+  {
+    "name": "security",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/security.eda.nokia.com/v1alpha1/security.json"
+  },
+  {
+    "name": "services",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/services.eda.nokia.com/v1alpha1/services.json"
+  },
+  {
+    "name": "siteinfo",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/siteinfo.eda.nokia.com/v1alpha1/siteinfo.json"
+  },
+  {
+    "name": "system",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/system.eda.nokia.com/v1alpha1/system.json"
+  },
+  {
+    "name": "timing",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/timing.eda.nokia.com/v1alpha1/timing.json"
+  },
+  {
+    "name": "topologies",
+    "url": "https://raw.githubusercontent.com/eda-labs/openapi/main/apps/topologies.eda.nokia.com/v1alpha1/topologies.json"
+  }
+]
