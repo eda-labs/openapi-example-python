@@ -55,3 +55,59 @@ datamodel-codegen --url https://raw.githubusercontent.com/eda-labs/openapi/refs/
 ```
 
 See [command options](https://koxudaxi.github.io/datamodel-code-generator/#all-command-options) for more details.
+
+## gen_models.py Documentation
+
+This script handles the discovery of all OpenAPI specifications under both core/ and apps/ directories, generates Pydantic models, and caches the discovered specifications to optimize subsequent runs.
+
+### Features
+
+- **Automatic Discovery**: Scans both core/ and apps/ directories for OpenAPI `.json` files.
+- **Caching**: Caches discovered specifications in `cached_specs.json` to reduce API calls.
+- **Rate Limiting**: Waits 5 seconds between API requests to respect rate limits.
+- **Retry Mechanism**: Retries failed API requests up to 3 times with exponential backoff.
+
+### Usage
+
+```bash
+# Generate models with default settings
+python gen_models.py
+
+# Force fresh discovery by ignoring the cache
+python gen_models.py --no-cache
+
+# Display help message
+python gen_models.py --help
+```
+
+### Troubleshooting
+
+#### Common Errors
+
+##### Missing Dependencies
+
+If you encounter `ModuleNotFoundError: No module named 'requests'`, ensure that you've installed all required dependencies:
+
+##### JSON Decode Errors
+
+If you encounter `json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)`, it may indicate an issue with the cached specifications. You can refresh the cache by running:
+
+##### Script Errors
+
+##### Type Errors
+
+If you encounter errors like `TypeError: OpenAPIDiscovery.generate_models() got an unexpected keyword argument 'use_cache'`, ensure that your `gen_models.py` script has the correct method signatures and that you're passing arguments appropriately.
+
+##### Rate Limiting
+
+The script includes a 5-second delay between API requests to prevent hitting GitHub rate limits. If you continue to experience rate limiting issues, consider increasing the `sleep_duration` in the script.
+
+### Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+
+### References
+
+See [command options](https://koxudaxi.github.io/datamodel-code-generator/#all-command-options) for more details on `datamodel-codegen`.
+
+For more details, refer to the [documentation](docs/gen_models.md).

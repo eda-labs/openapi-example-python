@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 import subprocess
 import sys
+import argparse  # Added import
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
@@ -14,12 +15,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class OpenAPIDiscovery:
-    def __init__(self):
+    def __init__(self, input_dir, output_dir, verbose, use_cache):
         self.base_url = "https://api.github.com/repos/eda-labs/openapi"
         self.raw_base = "https://raw.githubusercontent.com/eda-labs/openapi/main"
         self.headers = {"Accept": "application/vnd.github.v3+json"}
         self.cache_file = Path("cached_specs.json")
-        
+        self.input_dir = Path(input_dir)  # Added
+        self.output_dir = Path(output_dir)  # Added
+        self.verbose = verbose  # Added
+        self.use_cache = use_cache  # Added
+
+        if self.verbose:
+            logger.setLevel(logging.DEBUG)
+
         # Configure retry strategy
         retry_strategy = Retry(
             total=3,
@@ -107,10 +115,10 @@ class OpenAPIDiscovery:
             
         return specs
 
-    def generate_models(self, use_cache=True):
-        output_dir = Path("models")
+    def generate_models(self):
+        output_dir = self.output_dir  # Modified to use argument
         output_dir.mkdir(exist_ok=True)
-        specs = self.discover_specs(use_cache=use_cache)
+        specs = self.discover_specs(use_cache=self.use_cache)
         
         if not specs:
             logger.warning("No specs found!")
@@ -136,7 +144,38 @@ class OpenAPIDiscovery:
                 logger.error(f"Error generating models for {module_name}: {e}")
 
 if __name__ == "__main__":
-    discovery = OpenAPIDiscovery()
-    # Use --no-cache flag to force fresh discovery
-    use_cache = "--no-cache" not in sys.argv
-    discovery.generate_models(use_cache=use_cache)
+    parser = argparse.ArgumentParser(
+        description="Discover OpenAPI specifications and generate Pydantic models."
+    )
+    parser.add_argument(
+        "--input",
+        type=str,
+        default="./openapi_specs",
+        help="Path to the OpenAPI specifications directory. Default: ./openapi_specs",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="./models",
+        help="Path to the output models directory. Default: ./models",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging. Default: False",
+    )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Force fresh discovery by ignoring the cache. Default: False",
+    )
+    
+    args = parser.parse_args()
+    
+    discovery = OpenAPIDiscovery(
+        input_dir=args.input,
+        output_dir=args.output,
+        verbose=args.verbose,
+        use_cache=not args.no_cache
+    )
+    discovery.generate_models()
