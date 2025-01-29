@@ -1,4 +1,4 @@
-import models.com.nokia.eda.interfaces.v1alpha1 as iface
+import pydantic_eda.com.nokia.eda.interfaces.v1alpha1 as iface
 
 
 def interface(ns: str, name: str) -> iface.Interface:

@@ -1,4 +1,4 @@
-from models.com.nokia.eda.siteinfo.v1alpha1 import Banner, Metadata, Spec
+from pydantic_eda.com.nokia.eda.siteinfo.v1alpha1 import Banner, Metadata, Spec
 
 API_VERSION = "siteinfo.eda.nokia.com/v1alpha1"
 KIND = "Banner"
