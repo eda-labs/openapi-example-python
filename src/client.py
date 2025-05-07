@@ -24,7 +24,7 @@ TxType = Literal["create", "delete", "modify", "replace"]
 
 logger = logging.getLogger(__name__)
 
-EDA_VERSION = "v24.12.1"
+EDA_VERSION = "v25.4.1"
 
 KC_REALM = "master"
 KC_CLIENT_ID = "admin-cli"
