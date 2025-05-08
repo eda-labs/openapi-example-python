@@ -1,3 +1,5 @@
-from pydantic_eda.com.nokia.eda.services.v1alpha1 import VirtualNetwork
+import pydantic_eda.com.nokia.eda.
 
-
+def virtualnetwork(ns: str, name: str) -> 
+    vnet_ = 
+    return vnet_

@@ -6,9 +6,9 @@ setup_logging()
 
 
 def main():
-    eda = EDAClient(base_url="https://YOUR_EDA_EXT_DOMAIN_NAME:9443")
+    eda = EDAClient(base_url="https://YOUR_EDA_EXT_DOMAIN_NAME:PORT")
     
-    # my_virtualnetwork = ...
+    my_virtualnetwork = 
 
     eda.add_to_transaction_create(my_virtualnetwork)
     eda.commit_transaction()
