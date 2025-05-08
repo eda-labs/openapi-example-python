@@ -12,4 +12,4 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-pydantic-eda = { git = "https://github.com/eda-labs/pydantic-eda" }
+pydantic-eda = { git = "https://github.com/eda-labs/pydantic-eda", tag = "v0.2.0" }
