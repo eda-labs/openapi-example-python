@@ -123,7 +123,7 @@ def virtualnetwork(ns: str, name: str) -> service.VirtualNetwork:
     vnet = service.VirtualNetwork(
         apiVersion="services.eda.nokia.com/v1alpha1",
         kind="VirtualNetwork",
-        metadata=service.VirtualNetworkMetadata(name=name, namespace=ns),
+        metadata=service.VirtualNetworkMetadata(name=name, namespace=ns, labels={"role": "exercise"}),
         spec=service.SpecModel17(
             routers=[
                 router,
