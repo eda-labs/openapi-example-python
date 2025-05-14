@@ -1,4 +1,5 @@
-import pydantic_eda.com.nokia.eda.services.v1alpha1 as service
+import pydantic_eda.apps.services.v1alpha1.models as service
+
 
 def virtualnetwork(ns: str, name: str) -> service.VirtualNetwork:
     ...
