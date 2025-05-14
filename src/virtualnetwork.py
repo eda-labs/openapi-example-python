@@ -1,8 +1,8 @@
-import pydantic_eda.com.nokia.eda.services.v1alpha1 as service
+import pydantic_eda.apps.services.v1alpha1.models as service
 
-router = service.Router(
+router = service.VirtualNetworkSpecRouter(
     name="vnet-router",
-    spec=service.SpecModel15(
+    spec=service.VirtualNetworkSpecRouterSpec(
         eviPool="evi-pool",
         tunnelIndexPool="tunnel-index-pool",
         type="EVPNVXLAN",
@@ -10,9 +10,9 @@ router = service.Router(
     ),
 )
 
-bd_300 = service.BridgeDomain(
+bd_300 = service.VirtualNetworkSpecBridgeDomain(
     name="vnet-bridge-domain-300",
-    spec=service.SpecModel6(
+    spec=service.VirtualNetworkSpecBridgeDomainSpec(
         eviPool="evi-pool",
         tunnelIndexPool="tunnel-index-pool",
         type="EVPNVXLAN",
@@ -20,20 +20,20 @@ bd_300 = service.BridgeDomain(
     ),
 )
 
-vlan_300 = service.Vlan(
+vlan_300 = service.VirtualNetworkSpecVlan(
     name="vnet-vlan-300",
-    spec=service.SpecModel16(
-        bridgeDomain="vnet-bridge-domain-300",
+    spec=service.VirtualNetworkSpecVlanSpec(
+        bridgeDomain=bd_300.name,
         interfaceSelector=["edge-type=compute"],
-        uplink=service.Uplink(uplinkVLANID="pool"),
+        uplink=service.VirtualNetworkSpecVlanSpecUplink(uplinkVLANID="pool"),
         vlanID="300",
     ),
 )
 
 
-bd_312 = service.BridgeDomain(
+bd_312 = service.VirtualNetworkSpecBridgeDomain(
     name="vnet-bridge-domain-312",
-    spec=service.SpecModel6(
+    spec=service.VirtualNetworkSpecBridgeDomainSpec(
         eviPool="evi-pool",
         tunnelIndexPool="tunnel-index-pool",
         type="EVPNVXLAN",
@@ -41,78 +41,78 @@ bd_312 = service.BridgeDomain(
     ),
 )
 
-vlan_312 = service.Vlan(
+vlan_312 = service.VirtualNetworkSpecVlan(
     name="vnet-vlan-312",
-    spec=service.SpecModel16(
-        bridgeDomain="vnet-bridge-domain-312",
+    spec=service.VirtualNetworkSpecVlanSpec(
+        bridgeDomain=bd_312.name,
         interfaceSelector=["edge-type=compute"],
-        uplink=service.Uplink(uplinkVLANID="pool"),
+        uplink=service.VirtualNetworkSpecVlanSpecUplink(uplinkVLANID="pool"),
         vlanID="312",
     ),
 )
 
-irb_300 = service.IrbInterface(
+irb_300 = service.VirtualNetworkSpecIrbInterface(
     name="vnet-irb-300",
-    spec=service.SpecModel8(
-        bridgeDomain="vnet-bridge-domain-300",
-        hostRoutePopulate=service.HostRoutePopulate(dynamic=True, static=True),
+    spec=service.VirtualNetworkSpecIrbInterfaceSpec(
+        bridgeDomain=bd_300.name,
+        hostRoutePopulate=service.VirtualNetworkSpecIrbInterfaceSpecHostRoutePopulate(dynamic=True, static=True),
         ipAddresses=[
-            service.IpAddress(
-                ipv4Address=service.Ipv4Address(ipPrefix="10.30.0.1/24", primary=True)
+            service.VirtualNetworkSpecIrbInterfaceSpecIpAddress(
+                ipv4Address=service.VirtualNetworkSpecIrbInterfaceSpecIpAddressIpv4Address(ipPrefix="10.30.0.1/24", primary=True)
             ),
-            service.IpAddress(
-                ipv6Address=service.Ipv6Address(
+            service.VirtualNetworkSpecIrbInterfaceSpecIpAddress(
+                ipv6Address=service.VirtualNetworkSpecIrbInterfaceSpecIpAddressIpv6Address(
                     ipPrefix="fd00:fdfd:0:3000::1/64", primary=True
                 )
             ),
         ],
-        router="vnet-router",
+        router=router.name,
     ),
 )
 
-irb_312 = service.IrbInterface(
+irb_312 = service.VirtualNetworkSpecIrbInterface(
     name="vnet-irb-312",
-    spec=service.SpecModel8(
-        bridgeDomain="vnet-bridge-domain-312",
-        hostRoutePopulate=service.HostRoutePopulate(dynamic=True, static=True),
+    spec=service.VirtualNetworkSpecIrbInterfaceSpec(
+        bridgeDomain=bd_312.name,
+        hostRoutePopulate=service.VirtualNetworkSpecIrbInterfaceSpecHostRoutePopulate(dynamic=True, static=True),
         ipAddresses=[
-            service.IpAddress(
-                ipv4Address=service.Ipv4Address(ipPrefix="10.30.2.1/24", primary=True)
+            service.VirtualNetworkSpecIrbInterfaceSpecIpAddress(
+                ipv4Address=service.VirtualNetworkSpecIrbInterfaceSpecIpAddressIpv4Address(ipPrefix="10.30.2.1/24", primary=True)
             ),
-            service.IpAddress(
-                ipv6Address=service.Ipv6Address(
+            service.VirtualNetworkSpecIrbInterfaceSpecIpAddress(
+                ipv6Address=service.VirtualNetworkSpecIrbInterfaceSpecIpAddressIpv6Address(
                     ipPrefix="fd00:fdfd:0:3002::1/64", primary=True
                 )
             ),
         ],
-        router="vnet-router",
+        router=router.name,
     ),
 )
 
 
-routed_if_client11 = service.RoutedInterface(
+routed_if_client11 = service.VirtualNetworkSpecRoutedInterface(
     name="vnet-routed-interface-client11",
-    spec=service.SpecModel14(
+    spec=service.VirtualNetworkSpecRoutedInterfaceSpec(
         interface="leaf11-client11",
-        ipv4Addresses=[service.Ipv4Address(ipPrefix="10.30.1.1/24", primary=True)],
+        ipv4Addresses=[service.VirtualNetworkSpecRoutedInterfaceSpecIpv4Address(ipPrefix="10.30.1.1/24", primary=True)],
         ipv6Addresses=[
-            service.Ipv6Address(ipPrefix="fd00:fdfd:0:3001::1/64", primary=True)
+            service.VirtualNetworkSpecRoutedInterfaceSpecIpv6Address(ipPrefix="fd00:fdfd:0:3001::1/64", primary=True)
         ],
-        router="vnet-router",
+        router=router.name,
         vlanID="311",
         vlanPool="vlan-pool",
     ),
 )
 
-routed_if_client13 = service.RoutedInterface(
+routed_if_client13 = service.VirtualNetworkSpecRoutedInterface(
     name="vnet-routed-interface-client13",
-    spec=service.SpecModel14(
+    spec=service.VirtualNetworkSpecRoutedInterfaceSpec(
         interface="leaf13-client13",
-        ipv4Addresses=[service.Ipv4Address(ipPrefix="10.30.3.1/24", primary=True)],
+        ipv4Addresses=[service.VirtualNetworkSpecRoutedInterfaceSpecIpv4Address(ipPrefix="10.30.3.1/24", primary=True)],
         ipv6Addresses=[
-            service.Ipv6Address(ipPrefix="fd00:fdfd:0:3003::1/64", primary=True)
+            service.VirtualNetworkSpecRoutedInterfaceSpecIpv6Address(ipPrefix="fd00:fdfd:0:3003::1/64", primary=True)
         ],
-        router="vnet-router",
+        router=router.name,
         vlanID="313",
         vlanPool="vlan-pool",
     ),
@@ -124,7 +124,7 @@ def virtualnetwork(ns: str, name: str) -> service.VirtualNetwork:
         apiVersion="services.eda.nokia.com/v1alpha1",
         kind="VirtualNetwork",
         metadata=service.VirtualNetworkMetadata(name=name, namespace=ns, labels={"role": "exercise"}),
-        spec=service.SpecModel17(
+        spec=service.VirtualNetworkSpec(
             routers=[
                 router,
             ],

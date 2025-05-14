@@ -1,12 +1,12 @@
 from src.client import EDAClient
-from src.virtualnetwork import virtualnetwork
 from src.logging import setup_logging
+from src.virtualnetwork import virtualnetwork
 
 setup_logging()
 
 
 def main():
-    eda = EDAClient(base_url="https://YOUR_EDA_EXT_DOMAIN_NAME:PORT")
+    eda = EDAClient(base_url="https://<your_group_id>.srexperts.net:9443")
     my_virtualnetwork = virtualnetwork(ns="eda", name="my-vnet-using-python")
     eda.add_to_transaction_create(my_virtualnetwork)
     eda.commit_transaction()
