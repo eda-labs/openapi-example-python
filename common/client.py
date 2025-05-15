@@ -3,7 +3,7 @@ from typing import Any, List, Literal, Optional
 
 import httpx
 from pydantic import BaseModel
-from pydantic_eda.core import (
+from pydantic_eda.core.v25_4_1.models import (
     GroupVersionKind,
     NsCrGvkName,
     Transaction,
@@ -44,7 +44,7 @@ class EDAClient(httpx.Client):
         self.transaction: Optional[Transaction] = None
         self.transaction_endpoint: str = self.base_url.join("/core/transaction/v1")
 
-        super().__init__(headers=self.headers, verify=False)
+        super().__init__(headers=self.headers, verify=False, timeout=300)
 
         # acquire the token during initialization
         self.auth()
