@@ -13,3 +13,8 @@ dependencies = [
 
 [tool.uv.sources]
 pydantic-eda = { git = "https://github.com/eda-labs/pydantic-eda" }
+
+[tool.ruff.lint]
+# do not warn about imports not at the top
+# as we do have to modify the sys path for the exercises
+ignore = ["E402"]
