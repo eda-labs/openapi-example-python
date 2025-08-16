@@ -15,4 +15,4 @@ dependencies = [
 dev = ["ruff"]
 
 [tool.uv.sources]
-pydantic-eda = { git = "https://github.com/eda-labs/pydantic-eda", tag = "v0.3.2" }
+pydantic-eda = { git = "https://github.com/eda-labs/pydantic-eda", tag = "v0.4.0-rc1" }
