@@ -1,16 +1,17 @@
 import logging
-from typing import Any, List, Literal, Optional
+from typing import Any, List, Literal, Optional, Tuple
 
 import httpx
 from pydantic import BaseModel
-from pydantic_eda.core.v25_4_1.models import (
+from pydantic_eda.core.v25_8_1.models import (
     GroupVersionKind,
     NsCrGvkName,
     Transaction,
     TransactionContent,
     TransactionCr,
-    TransactionDetails,
+    TransactionExecutionResult,
     TransactionId,
+    TransactionSummaryResult,
     TransactionType,
     TransactionValue,
 )
@@ -24,8 +25,6 @@ TxType = Literal["create", "delete", "modify", "replace"]
 
 logger = logging.getLogger(__name__)
 
-EDA_VERSION = "v25.4.1"
-
 KC_REALM = "master"
 KC_CLIENT_ID = "admin-cli"
 KC_USERNAME = "admin"
@@ -33,23 +32,28 @@ KC_PASSWORD = "admin"
 EDA_REALM = "eda"
 API_CLIENT_ID = "eda"
 
+KC_API_URL = "/core/httpproxy/v1/keycloak"
+TX_API_URL = "/core/transaction/v2"
+
 
 class EDAClient(httpx.Client):
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str, username: str, password: str):
         self.base_url: str = base_url
-        self.kc_url: str = self.base_url.join("/core/httpproxy/v1/keycloak")
+        self.kc_url: str = self.base_url.join(KC_API_URL)
+        self.username: str = username
+        self.password: str = password
 
         self.headers: dict[str, str] = {}
         self.token: str = ""
         self.transaction: Optional[Transaction] = None
-        self.transaction_endpoint: str = self.base_url.join("/core/transaction/v1")
+        self.transaction_endpoint: str = self.base_url.join(TX_API_URL)
 
         super().__init__(headers=self.headers, verify=False)
 
         # acquire the token during initialization
-        self.auth()
+        self._auth()
 
-    def auth(self) -> None:
+    def _auth(self) -> None:
         """Authenticate and get access token"""
         logger.info("Authenticating with EDA API server")
 
@@ -131,7 +135,7 @@ class EDAClient(httpx.Client):
             self.transaction.crs.append(tx_cr)
 
     def commit_transaction(self) -> Any:
-        """Commit transaction"""
+        """Commit transaction and get its status"""
 
         # convert the transaction instance to a dict
         if self.transaction is None:
@@ -140,7 +144,7 @@ class EDAClient(httpx.Client):
         self.transaction.retain = True
         self.transaction.resultType = "normal"
 
-        content = self.transaction.model_dump_json(
+        tx_content = self.transaction.model_dump_json(
             exclude_unset=True, exclude_none=True, exclude_defaults=True
         )
 
@@ -148,7 +152,7 @@ class EDAClient(httpx.Client):
 
         response = self.post(
             url=self.transaction_endpoint,
-            content=content,
+            content=tx_content,
         )
         if response.status_code != 200:
             raise ValueError(response.text)
@@ -159,29 +163,23 @@ class EDAClient(httpx.Client):
 
         logger.info(f"Transaction {tx_id.id} committed")
 
-        tx_details: TransactionDetails = self.get_transaction_details(tx_id.id)
-        errs = self.tx_must_succeed(tx_details)
+        tx_summary_result, errs = self.tx_must_succeed(tx_id.id)
         if errs:
             logger.error(f"Transaction {tx_id.id} errors:\n  - " + "\n  - ".join(errs))
-        logger.info(f"Transaction {tx_id.id} state: {tx_details.state}")
+        logger.info(f"Transaction {tx_id.id} state: {tx_summary_result.state}")
 
-    def get_transaction_details(self, tx_id: int) -> TransactionDetails:
-        """Get transaction"""
+    def get_transaction_summary_result(self, tx_id: int) -> TransactionSummaryResult:
+        """Get transaction summary result"""
 
-        params = {
-            "waitForComplete": "true",
-            # "failOnErrors": "true"
-        }
         response = self.get(
-            url=f"{self.transaction_endpoint}/details/{tx_id}",
-            params=params,
+            url=f"{self.transaction_endpoint}/result/summary/{tx_id}",
         )
         if response.status_code != 200:
             raise ValueError(response.text)
 
         # logger.info(f"Transaction {tx_id} details:\n{response.json()}")
 
-        return TransactionDetails(**response.json())
+        return TransactionSummaryResult(**response.json())
 
     def _get_client_secret(self) -> str:
         client = self
@@ -238,8 +236,8 @@ class EDAClient(httpx.Client):
             "client_id": API_CLIENT_ID,
             "grant_type": "password",
             "scope": "openid",
-            "username": "admin",
-            "password": "admin",
+            "username": self.username,
+            "password": self.password,
             "client_secret": client_secret,
         }
 
@@ -249,7 +247,45 @@ class EDAClient(httpx.Client):
         response.raise_for_status()
         return response.json()["access_token"]
 
-    def tx_must_succeed(self, tx_details: TransactionDetails) -> List[str] | None:
-        """Check if transaction succeeded"""
-        if not tx_details.success:
-            return tx_details.generalErrors
+    def tx_must_succeed(
+        self, tx_id: int
+    ) -> Tuple[TransactionSummaryResult, Optional[List[str]]]:
+        """Wait for transaction to complete and fetch its status and execution errors"""
+
+        errors: List[str] = []
+
+        tx_exec_result: TransactionExecutionResult = self.get_transaction_exec_result(
+            tx_id
+        )
+
+        tx_summary_result: TransactionSummaryResult = (
+            self.get_transaction_summary_result(tx_id)
+        )
+
+        if not tx_summary_result.success:
+            if tx_exec_result.generalErrors:
+                errors.extend(tx_exec_result.generalErrors)
+            # find errors in the intents
+            if tx_exec_result.intentsRun:
+                for intent_result in tx_exec_result.intentsRun:
+                    if intent_result.errors:
+                        for error in intent_result.errors:
+                            errors.append(
+                                f"Intent '{intent_result.intentName}' error: {error.rawError}"
+                            )
+
+        return (tx_summary_result, errors)
+
+    def get_transaction_exec_result(self, tx_id: int) -> TransactionExecutionResult:
+        """Get transaction execution result and wait for transaction to complete"""
+        params = {"waitForComplete": "true"}
+        response = self.get(
+            url=f"{self.transaction_endpoint}/result/execution/{tx_id}", params=params
+        )
+
+        if response.status_code != 200:
+            raise ValueError(response.text)
+
+        # logger.info(f"Transaction {tx_id} exec results:\n{response.json()}")
+
+        return TransactionExecutionResult(**response.json())
