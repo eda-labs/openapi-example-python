@@ -3,7 +3,7 @@ from typing import Any, List, Literal, Optional, Tuple
 
 import httpx
 from pydantic import BaseModel
-from pydantic_eda.core.v25_8_1_rc1.models import (
+from pydantic_eda.core.v25_8_1.models import (
     GroupVersionKind,
     NsCrGvkName,
     Transaction,
@@ -51,9 +51,9 @@ class EDAClient(httpx.Client):
         super().__init__(headers=self.headers, verify=False)
 
         # acquire the token during initialization
-        self.auth()
+        self._auth()
 
-    def auth(self) -> None:
+    def _auth(self) -> None:
         """Authenticate and get access token"""
         logger.info("Authenticating with EDA API server")
 

@@ -121,7 +121,7 @@ dev = [
 requires-dist = [
     { name = "httpx", specifier = "==0.28.1" },
     { name = "pydantic", specifier = "==2.10.6" },
-    { name = "pydantic-eda", git = "https://github.com/eda-labs/pydantic-eda?tag=v0.4.0-rc1" },
+    { name = "pydantic-eda", git = "https://github.com/eda-labs/pydantic-eda?tag=v0.4.0" },
     { name = "rich", specifier = ">=13.9.4" },
 ]
 
@@ -184,7 +184,7 @@ wheels = [
 [[package]]
 name = "pydantic-eda"
 version = "0.4.0"
-source = { git = "https://github.com/eda-labs/pydantic-eda?tag=v0.4.0-rc1#56c97503035f8523a3ce67c36337fad1601cb0e2" }
+source = { git = "https://github.com/eda-labs/pydantic-eda?tag=v0.4.0#dc7bb9ac5ab899d81d2ba16c293340674095cd2e" }
 dependencies = [
     { name = "pydantic" },
 ]
