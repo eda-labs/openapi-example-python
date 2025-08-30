@@ -6,7 +6,11 @@ setup_logging()
 
 
 def main():
-    eda = EDAClient(base_url="https://<your_group_id>.srexperts.net:9443")
+    eda = EDAClient(
+        base_url="https://<your_group_id>.srexperts.net:9443",
+        username="admin",
+        password="<fill in the password>",
+    )
 
     # the virtualnetwork function returns an empty object. Fill it in.
     my_virtualnetwork = virtualnetwork(ns="eda", name="my-vnet-using-python")
