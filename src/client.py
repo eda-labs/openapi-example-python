@@ -3,7 +3,7 @@ from typing import Any, List, Literal, Optional, Tuple
 
 import httpx
 from pydantic import BaseModel
-from pydantic_eda.core.v25_8_1_rc1.models import (
+from pydantic_eda.core.v25_8_1.models import (
     GroupVersionKind,
     NsCrGvkName,
     Transaction,
